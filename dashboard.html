@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Área Privada - Focus Club Vallecas</title>
+    <link rel="icon" type="image/jpeg" href="./img/logo.jpg">
+
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="stylesheet" href="./dashboard.css">
+</head>
+
+<body>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-text">FOCUS <span>CLUB</span></div>
+                <button class="close-sidebar-btn" onclick="toggleSidebar()"><i class="fa-solid fa-times"></i></button>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="section-label">Principal</div>
+                <a href="#" id="nav-inicio" class="nav-item active"
+                    onclick="switchTab('inicio', this); closeSidebar(); return false;">
+                    <i class="fa-solid fa-home"></i> Inicio
+                </a>
+
+                <div class="section-label" style="margin-top: 20px;">Gestión</div>
+                <a href="#" id="nav-reservas" class="nav-item"
+                    onclick="switchTab('reservas', this); closeSidebar(); return false;">
+                    <i class="fa-solid fa-calendar-check"></i> Reservas
+                </a>
+                <a href="#" id="nav-planes" class="nav-item"
+                    onclick="switchTab('planes', this); closeSidebar(); return false;">
+                    <i class="fa-solid fa-dumbbell"></i> Planes
+                </a>
+                <a href="#" id="nav-pagos" class="nav-item"
+                    onclick="switchTab('pagos', this); closeSidebar(); return false;">
+                    <i class="fa-solid fa-credit-card"></i> Pagos
+                </a>
+
+                <div class="section-label" style="margin-top: 20px;">Cuenta</div>
+                <a href="#" id="nav-perfil" class="nav-item"
+                    onclick="switchTab('perfil', this); closeSidebar(); return false;">
+                    <i class="fa-solid fa-user"></i> Perfil
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-mini">
+                    <div class="user-avatar">JP</div>
+                    <div class="user-info">
+                        <h4>Juan Pérez</h4>
+                        <span>Miembro activo</span>
+                    </div>
+                    <a href="./login.html" style="margin-left: auto; color: var(--gray-light); transition: color 0.3s;"
+                        onmouseover="this.style.color='white'" onmouseout="this.style.color='var(--gray-light)'"><i
+                            class="fa-solid fa-sign-out"></i></a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+
+            <!-- INICIO Tab -->
+            <div id="inicio" class="section-content active">
+                <div class="top-bar">
+                    <button class="mobile-menu-btn" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+                    <div>
+                        <div style="font-size: 0.9rem; color: var(--gray-light); margin-bottom: 5px;">Bienvenido de
+                            nuevo</div>
+                        <h1 class="page-title">Juan Pérez</h1>
+                    </div>
+                    <button class="btn btn-primary" onclick="switchTab('reservas')"
+                        style="margin-left: auto; white-space: nowrap;">
+                        <i class="fa-solid fa-plus" style="margin-right: 8px;"></i> Reservar
+                    </button>
+                </div>
+
+                <div class="dashboard-grid">
+                    <!-- Active Plan -->
+                    <div class="card stat-card">
+                        <div>
+                            <div class="stat-label">Plan Actual</div>
+                            <div class="stat-value">Bono Mensual</div>
+                            <div class="status-badge status-active">
+                                <span class="status-dot"></span> Activo
+                            </div>
+                        </div>
+                        <div class="icon-box" style="background: rgba(76,175,80,0.1); color: var(--green-glow);">
+                            <i class="fa-solid fa-dumbbell"></i>
+                        </div>
+                    </div>
+
+                    <!-- Next Session -->
+                    <div class="card stat-card">
+                        <div>
+                            <div class="stat-label">Próxima Sesión</div>
+                            <div class="stat-value" id="next-session-time">Mañana 10:00</div>
+                            <div id="next-session-info" style="color: #ccc; font-size: 0.9rem;"><i
+                                    class="fa-regular fa-clock" style="margin-right: 5px;"></i> Hipertrofia con Sandra
+                            </div>
+                        </div>
+                        <div class="icon-box" style="background: rgba(33,150,243,0.1); color: #2196F3;">
+                            <i class="fa-solid fa-calendar"></i>
+                        </div>
+                    </div>
+
+                    <!-- Sessions Left -->
+                    <div class="card stat-card">
+                        <div>
+                            <div class="stat-label">Sesiones Restantes</div>
+                            <div class="stat-value" id="sessions-remaining">3 <span
+                                    style="font-size: 1.5rem; color: #666; font-weight: 300;">/
+                                    4</span></div>
+                            <div class="stat-label" style="font-size: 0.75rem; margin-top: 5px;">Renueva: 15 Feb</div>
+                        </div>
+                        <div class="icon-box" style="background: rgba(255,152,0,0.1); color: #ff9800;">
+                            <i class="fa-solid fa-chart-pie"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <h3
+                    style="margin-bottom: 25px; font-family: var(--font-display); font-size: 1.5rem; color: var(--white); letter-spacing: 1px;">
+                    Acciones Rápidas</h3>
+                <div class="dashboard-grid">
+                    <div class="card" style="cursor: pointer; display: flex; align-items: center; gap: 20px;"
+                        onclick="switchTab('reservas')">
+                        <div class="icon-box"
+                            style="background: rgba(255,255,255,0.05); color: var(--green-glow); width: 60px; height: 60px; font-size: 1.5rem;">
+                            <i class="fa-solid fa-calendar-plus"></i>
+                        </div>
+                        <div>
+                            <h4 style="color: var(--white); font-size: 1.2rem; margin-bottom: 5px;">Reservar Cita</h4>
+                            <p style="color: #888; font-size: 0.9rem; margin: 0;">Agenda tu próximo entrenamiento 1:1.
+                            </p>
+                        </div>
+                        <i class="fa-solid fa-arrow-right" style="margin-left: auto; color: var(--gray-light);"></i>
+                    </div>
+
+                    <div class="card" style="cursor: pointer; display: flex; align-items: center; gap: 20px;"
+                        onclick="switchTab('planes')">
+                        <div class="icon-box"
+                            style="background: rgba(255,255,255,0.05); color: var(--green-glow); width: 60px; height: 60px; font-size: 1.5rem;">
+                            <i class="fa-solid fa-repeat"></i>
+                        </div>
+                        <div>
+                            <h4 style="color: var(--white); font-size: 1.2rem; margin-bottom: 5px;">Renovar Bono</h4>
+                            <p style="color: #888; font-size: 0.9rem; margin: 0;">Gestiona tu membresía o suscripción.
+                            </p>
+                        </div>
+                        <i class="fa-solid fa-arrow-right" style="margin-left: auto; color: var(--gray-light);"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PLANES Tab -->
+            <div id="planes" class="section-content">
+                <div class="top-bar">
+                    <button class="mobile-menu-btn" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+                    <div>
+                        <h1 class="page-title">Planes Disponibles</h1>
+                        <p style="color: var(--gray-light); margin-top: 10px;">Elige el plan que mejor se adapte a tus
+                            objetivos.</p>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+
+                    <!-- Plan 1 -->
+                    <div class="plan-card">
+                        <div class="plan-image"
+                            style="background-image: url('https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=800');">
+                        </div>
+                        <div class="plan-content">
+                            <h3 class="plan-title">Entrenamiento personal</h3>
+                            <p class="plan-desc">Entrenamiento intensivo 1:1. Ideal para sesiones puntuales de técnica o
+                                evaluación.</p>
+
+                            <div class="plan-price-row">
+                                <span class="price-current">50,00 €</span>
+                                <span class="price-original">55,00 €</span>
+                            </div>
+
+                            <button class="btn btn-plan">Seleccionar Plan</button>
+                        </div>
+                    </div>
+
+                    <!-- Plan 2 -->
+                    <div class="plan-card popular">
+                        <div class="plan-image"
+                            style="background-image: url('https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=800');">
+                            <div class="popular-badge">Más Popular</div>
+                        </div>
+                        <div class="plan-content">
+                            <h3 class="plan-title">Bono Entrenamientos</h3>
+                            <p class="plan-desc">Pack mensual de 4 sesiones de 1 hora (o 8 de 30'). Compromiso real y
+                                resultados garantizados.</p>
+
+                            <div class="plan-price-row">
+                                <span class="price-current">180,00 €</span>
+                                <span class="price-original">200,00 €</span>
+                            </div>
+
+                            <button class="btn btn-plan"
+                                style="background: var(--green-glow); color: black; border-color: var(--green-glow);">Seleccionar
+                                Bono</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Placeholders for other tabs -->
+            <div id="reservas" class="section-content">
+                <!-- Booking Section (Full Width) -->
+                <div class="top-bar">
+                    <button class="mobile-menu-btn" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+                    <div>
+                        <h1 class="page-title">Reservar Sesión</h1>
+                        <p style="color: var(--gray-light); margin-top: 5px;">Diseña tu semana de entrenamiento.</p>
+                    </div>
+                </div>
+
+                <div class="bookings-container-full">
+
+                    <!-- 1. Trainers Selection (Full Width) -->
+                    <div class="card">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+                            <h3 style="color: white; font-family: var(--font-display); margin: 0;">1. Elige Entrenador
+                            </h3>
+
+                            <!-- Filters -->
+                            <div class="filters-container" style="margin-bottom: 0;">
+                                <div class="skills-scroll">
+                                    <button class="skill-pill active"
+                                        onclick="filterTrainers('all', this)">Todos</button>
+                                    <button class="skill-pill" onclick="filterTrainers('Fuerza', this)">Fuerza</button>
+                                    <button class="skill-pill" onclick="filterTrainers('Yoga', this)">Yoga</button>
+                                    <button class="skill-pill" onclick="filterTrainers('HIIT', this)">HIIT</button>
+                                    <button class="skill-pill" onclick="filterTrainers('Boxeo', this)">Boxeo</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="trainers-grid" class="trainers-grid">
+                            <!-- Injected via JS -->
+                        </div>
+                    </div>
+
+                    <!-- 2. Calendar (Strict Grid 7x5, Full Width) -->
+                    <div class="card" style="background: var(--bg-darker); border: 1px solid var(--border-glass);">
+                        <h3 style="color: white; font-family: var(--font-display); margin-bottom: 25px;">2. Fecha y Hora
+                        </h3>
+
+                        <div class="calendar-wrapper" style="width: 100%; max-width: 800px; margin: 0 auto;">
+                            <div class="calendar-header"
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 0 10px;">
+                                <button onclick="changeMonth(-1)"
+                                    style="background:none; border:none; color:white; cursor:pointer; font-size: 1.2rem;"><i
+                                        class="fa-solid fa-chevron-left"></i></button>
+                                <span id="calendar-month-year"
+                                    style="font-size: 1.5rem; font-weight: 600; font-family: var(--font-display); letter-spacing: 1px;">Febrero
+                                    2026</span>
+                                <button onclick="changeMonth(1)"
+                                    style="background:none; border:none; color:white; cursor:pointer; font-size: 1.2rem;"><i
+                                        class="fa-solid fa-chevron-right"></i></button>
+                            </div>
+
+                            <!-- Weekdays -->
+                            <div class="calendar-grid"
+                                style="margin-bottom: 15px; grid-template-columns: repeat(7, 1fr); text-align: center; color: #666; font-size: 0.9rem; font-weight: 600;">
+                                <div>LUN</div>
+                                <div>MAR</div>
+                                <div>MIÉ</div>
+                                <div>JUE</div>
+                                <div>VIE</div>
+                                <div>SÁB</div>
+                                <div>DOM</div>
+                            </div>
+
+                            <!-- Days Grid -->
+                            <div id="calendar-days" class="calendar-grid"
+                                style="grid-template-columns: repeat(7, 1fr); gap: 10px;">
+                                <!-- Injected via JS -->
+                            </div>
+                        </div>
+
+                        <!-- Time Slots (Hidden by default) -->
+                        <div id="time-selection-area"
+                            style="display: none; margin-top: 50px; text-align: center; border-top: 1px solid var(--border-glass); padding-top: 40px;">
+                            <h4 style="color: white; margin-bottom: 25px; font-weight: 300; font-size: 1.2rem;">Horarios
+                                para <span id="selected-date-display"
+                                    style="color: var(--green-glow); font-weight: 700;"></span></h4>
+
+                            <div id="slots-grid">
+                                <!-- Injected JS -->
+                            </div>
+
+                            <button id="btn-confirm" class="btn btn-primary"
+                                style="width: 100%; max-width: 300px; padding: 15px; font-size: 1.1rem; margin-top: 30px;"
+                                onclick="confirmBooking()">CONFIRMAR RESERVA</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div> <!-- Closes #reservas correctly -->
+
+            <div id="pagos" class="section-content">
+                <div class="top-bar">
+                    <button class="mobile-menu-btn" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+                    <h1 class="page-title">Facturación</h1>
+                </div>
+                <div class="card"
+                    style="min-height: 400px; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+                    <i class="fa-solid fa-file-invoice-dollar"
+                        style="font-size: 3rem; color: var(--gray-light); margin-bottom: 20px; opacity: 0.3;"></i>
+                    <p style="color: var(--gray-text); text-align: center;">Historial de Pagos</p>
+                    <span style="font-size: 0.8rem; color: #555;">(Se integrará con Stripe/Redsys)</span>
+                </div>
+            </div>
+
+            <div id="perfil" class="section-content">
+                <div class="top-bar">
+                    <button class="mobile-menu-btn" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+                    <h1 class="page-title">Mi Perfil</h1>
+                </div>
+                <div class="card">
+                    <h3 style="color: white; font-family: var(--font-display); margin-bottom: 20px;">Datos Personales
+                    </h3>
+                    <div style="display: grid; gap: 20px; color: #aaa;">
+                        <div style="padding: 15px; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                            <label style="display: block; font-size: 0.8rem; margin-bottom: 5px;">Nombre
+                                Completo</label>
+                            <div style="color: white; font-size: 1.1rem;">Juan Pérez</div>
+                        </div>
+                        <div style="padding: 15px; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                            <label style="display: block; font-size: 0.8rem; margin-bottom: 5px;">Email</label>
+                            <div style="color: white; font-size: 1.1rem;">juan.perez@email.com</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <div id="booking-toast" class="toast">
+        <i class="fa-solid fa-check-circle" style="color: var(--green-glow); font-size: 1.2rem;"></i>
+        <span>Reserva confirmada. ¡Nos vemos en el club!</span>
+    </div>
+
+    <script>
+        // Global State & Booking Logic
+        const userState = {
+            sessionsRemaining: 3,
+            totalSessions: 4,
+            nextSession: {
+                time: 'Mañana 10:00',
+                info: 'Hipertrofia con Sandra',
+                timestamp: Date.now() + 86400000
+            }
+        };
+
+        const trainers = [
+            { id: 'any', name: 'Cualquier Entrenador', role: 'Asignación auto', skills: [], img: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=100' },
+            { id: 1, name: 'Carlos', role: 'Master Trainer', skills: ['Fuerza', 'Powerlifting'], img: 'https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?w=100' },
+            { id: 2, name: 'Ana', role: 'Yoga Instructor', skills: ['Yoga', 'Movilidad'], img: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=100' },
+            { id: 3, name: 'Sergio', role: 'HIIT Coach', skills: ['HIIT', 'Boxeo'], img: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=100' }
+        ];
+
+        let currentFilter = 'all';
+        let selectedTrainerId = null;
+        let selectedDate = null; // Object {day, month, year}
+        let selectedTime = null;
+        let currentCalendarMonth = new Date().getMonth();
+        let currentCalendarYear = new Date().getFullYear();
+
+        // --- DASHBOARD UI ---
+        function updateDashboardUI() {
+            const sessionEl = document.getElementById('sessions-remaining');
+            if (sessionEl) {
+                sessionEl.innerHTML = `${userState.sessionsRemaining} <span style="font-size: 1.5rem; color: #666; font-weight: 300;">/ ${userState.totalSessions}</span>`;
+            }
+            const nextTimeEl = document.getElementById('next-session-time');
+            const nextInfoEl = document.getElementById('next-session-info');
+            if (nextTimeEl && userState.nextSession.time) {
+                nextTimeEl.innerText = userState.nextSession.time;
+                nextInfoEl.innerHTML = `<i class="fa-regular fa-clock" style="margin-right: 5px;"></i> ${userState.nextSession.info}`;
+            }
+        }
+
+        // --- TRAINERS ---
+        function renderTrainers() {
+            const grid = document.getElementById('trainers-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            trainers.forEach(trainer => {
+                const hasSkill = trainer.skills.includes(currentFilter);
+                if (currentFilter !== 'all' && !hasSkill && trainer.id !== 'any') return;
+
+                const card = document.createElement('div');
+                card.className = `trainer-card ${selectedTrainerId === trainer.id ? 'selected' : ''}`;
+                card.onclick = () => selectTrainer(trainer.id);
+
+                const skillsHtml = trainer.skills.map(s => `<span class="skill-badge">${s}</span>`).join('');
+                const isAny = trainer.id === 'any';
+
+                card.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <img src="${trainer.img}" class="trainer-img" style="${isAny ? 'filter: grayscale(1);' : ''}">
+                        <div>
+                            <h4 style="color: white; margin: 0 0 4px 0;">${trainer.name}</h4>
+                            <p style="color: #888; font-size: 0.8rem; margin: 0;">${trainer.role}</p>
+                        </div>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        ${isAny ? '<span style="font-size: 0.8rem; color: #666;">Selección basada en filtro</span>' : skillsHtml}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function filterTrainers(skill, btnElement) {
+            currentFilter = skill;
+            document.querySelectorAll('.skill-pill').forEach(el => el.classList.remove('active'));
+            btnElement.classList.add('active');
+            renderTrainers();
+        }
+
+        function selectTrainer(id) {
+            selectedTrainerId = id;
+            renderTrainers();
+            // If date is already selected, maybe refresh slots
+            if (selectedDate) generateTimeSlots();
+        }
+
+        // --- CALENDAR LOGIC (ADVANCED GRID) ---
+        function renderCalendar() {
+            const grid = document.getElementById('calendar-days');
+            const monthYearEl = document.getElementById('calendar-month-year');
+            const months = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
+            monthYearEl.innerText = `${months[currentCalendarMonth]} ${currentCalendarYear}`;
+            grid.innerHTML = '';
+
+            const firstDay = new Date(currentCalendarYear, currentCalendarMonth, 1).getDay();
+            const daysInMonth = new Date(currentCalendarYear, currentCalendarMonth + 1, 0).getDate();
+            const startingEmpty = firstDay === 0 ? 6 : firstDay - 1;
+
+            // Empty slots
+            for (let i = 0; i < startingEmpty; i++) {
+                const empty = document.createElement('div');
+                grid.appendChild(empty);
+            }
+
+            // Days
+            // HARDCODED "TODAY" for demo logic: 13 Feb 2026 as per prompt
+            const demoToday = new Date(2026, 1, 13); // Feb is 1
+            demoToday.setHours(0, 0, 0, 0);
+
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dayDate = new Date(currentCalendarYear, currentCalendarMonth, i);
+                const dayEl = document.createElement('div');
+                dayEl.classList.add('calendar-day');
+                dayEl.innerText = i;
+
+                // 1. Check Past (Before 13 Feb 2026)
+                if (dayDate < demoToday) {
+                    dayEl.classList.add('disabled-past');
+                } else {
+                    // 2. Check Specific "Full" Dates (15 and 20 Feb)
+                    // Note: Month is 0-indexed (1 = Feb)
+                    const isFull = (currentCalendarMonth === 1 && (i === 15 || i === 20) && currentCalendarYear === 2026);
+
+                    if (isFull) {
+                        dayEl.classList.add('full');
+                        dayEl.title = "Completo";
+                    } else {
+                        // Clickable
+                        dayEl.onclick = () => selectDay(i, dayEl);
+                    }
+                }
+
+                // Selected State
+                if (selectedDate && selectedDate.day === i && selectedDate.month === currentCalendarMonth && selectedDate.year === currentCalendarYear) {
+                    dayEl.classList.add('selected');
+                }
+
+                // Today Highlight (13 Feb)
+                if (dayDate.getTime() === demoToday.getTime()) {
+                    dayEl.style.border = '1px solid var(--green-glow)';
+                    dayEl.style.color = 'var(--green-glow)';
+                }
+
+                grid.appendChild(dayEl);
+            }
+        }
+
+        function changeMonth(delta) {
+            currentCalendarMonth += delta;
+            if (currentCalendarMonth > 11) { currentCalendarMonth = 0; currentCalendarYear++; }
+            if (currentCalendarMonth < 0) { currentCalendarMonth = 11; currentCalendarYear--; }
+            renderCalendar();
+        }
+
+        function selectDay(day, el) {
+            document.querySelectorAll('.calendar-day').forEach(d => d.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedDate = { day, month: currentCalendarMonth, year: currentCalendarYear };
+
+            // Format nice date
+            const dateObj = new Date(currentCalendarYear, currentCalendarMonth, day);
+            const options = { weekday: 'long', day: 'numeric', month: 'long' };
+            const dateString = dateObj.toLocaleDateString('es-ES', options);
+
+            document.getElementById('selected-date-display').innerText = dateString.charAt(0).toUpperCase() + dateString.slice(1);
+
+            // Slide down animation logic
+            const timeArea = document.getElementById('time-selection-area');
+            timeArea.style.display = 'block';
+            timeArea.style.opacity = '0';
+            timeArea.style.transform = 'translateY(-10px)';
+            timeArea.style.transition = 'all 0.4s ease';
+
+            setTimeout(() => {
+                timeArea.style.opacity = '1';
+                timeArea.style.transform = 'translateY(0)';
+            }, 10);
+
+            generateTimeSlots();
+            selectedTime = null;
+        }
+
+        // --- TIME SLOTS ---
+        function generateTimeSlots() {
+            const container = document.getElementById('slots-grid');
+            container.innerHTML = '';
+
+            const prob = selectedTrainerId === 'any' ? 0.9 : 0.6;
+            const slots = [];
+
+            // Clean slots list
+            const all = ["09:00", "10:00", "11:00", "12:00", "16:00", "17:00", "18:00", "19:00", "20:00"];
+
+            all.forEach(time => {
+                if (Math.random() < prob) slots.push(time);
+            });
+            // Ensure minimum
+            if (slots.length < 3) slots.push("10:00", "18:00", "19:00");
+
+            // Sort
+            slots.sort((a, b) => parseInt(a) - parseInt(b));
+
+            slots.forEach(time => {
+                const btn = document.createElement('button');
+                btn.className = 'time-slot';
+                btn.innerText = time;
+                btn.onclick = () => selectTime(time, btn);
+                container.appendChild(btn);
+            });
+        }
+
+        function selectTime(time, btn) {
+            document.querySelectorAll('.time-slot').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            selectedTime = time;
+        }
+
+        // --- CONFIRMATION ---
+        function showToast(message) {
+            const toast = document.getElementById('booking-toast');
+            toast.querySelector('span').innerText = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 4000);
+        }
+
+        function confirmBooking() {
+            if (!selectedTrainerId) { alert("Elige un entrenador primero."); return; }
+            if (!selectedDate || !selectedTime) { alert("Por favor selecciona día y hora."); return; }
+
+            // Resolve Trainer
+            let assignedTrainer = trainers.find(t => t.id === selectedTrainerId);
+            if (assignedTrainer.id === 'any' && currentFilter !== 'all') {
+                const match = trainers.find(t => t.skills.includes(currentFilter) && t.id !== 'any');
+                if (match) assignedTrainer = match;
+            }
+
+            if (userState.sessionsRemaining > 0) {
+                userState.sessionsRemaining--;
+
+                // Format for Dashboard
+                const monthsShort = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+                const dayStr = `${selectedDate.day} ${monthsShort[selectedDate.month]}`;
+                const skillStr = currentFilter !== 'all' ? currentFilter : 'Entrenamiento';
+
+                userState.nextSession = {
+                    time: `${dayStr} - ${selectedTime}`,
+                    info: `${assignedTrainer.name} (${skillStr})`
+                };
+
+                updateDashboardUI();
+                showToast("✅ Reserva confirmada");
+
+                switchTab('inicio');
+
+                // Reset
+                selectedTrainerId = null; selectedDate = null; selectedTime = null;
+                renderTrainers(); renderCalendar();
+                document.getElementById('time-selection-area').style.display = 'none';
+            } else {
+                alert("❌ Sin sesiones disponibles.");
+            }
+        }
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            renderTrainers();
+            renderCalendar();
+            updateDashboardUI();
+        });
+
+        function switchTab(tabId, navElement) {
+            // Hide all contents
+            document.querySelectorAll('.section-content').forEach(el => el.classList.remove('active'));
+            // Show target content
+            document.getElementById(tabId).classList.add('active');
+
+            // If navElement is not passed, try to find it by ID
+            if (!navElement) {
+                navElement = document.getElementById('nav-' + tabId);
+            }
+
+            // Update sidebar active state
+            if (navElement) {
+                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+                navElement.classList.add('active');
+            }
+        }
+
+        function toggleSidebar() {
+            document.querySelector('.sidebar').classList.toggle('active');
+            document.querySelector('.sidebar-overlay').classList.toggle('active');
+        }
+
+        function closeSidebar() {
+            if (window.innerWidth <= 768) {
+                document.querySelector('.sidebar').classList.remove('active');
+                document.querySelector('.sidebar-overlay').classList.remove('active');
+            }
+        }
+    </script>
+    <script type="module">
+        import { initCapacitor } from './capacitor-init.js';
+        import { Capacitor } from '@capacitor/core';
+        import { PushNotifications } from '@capacitor/push-notifications';
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initCapacitor();
+
+            // Push Notifications — only on native platforms
+            if (Capacitor.isNativePlatform()) {
+                try {
+                    const permResult = await PushNotifications.requestPermissions();
+                    if (permResult.receive === 'granted') {
+                        await PushNotifications.register();
+                        console.log('[Push] Registration initiated.');
+                    } else {
+                        console.warn('[Push] Permission denied.');
+                    }
+
+                    PushNotifications.addListener('registration', (token) => {
+                        console.log('[Push] Token:', token.value);
+                        // TODO: send token to your backend
+                    });
+
+                    PushNotifications.addListener('registrationError', (err) => {
+                        console.error('[Push] Registration error:', err);
+                    });
+
+                    PushNotifications.addListener('pushNotificationReceived', (notification) => {
+                        console.log('[Push] Notification received:', notification);
+                    });
+
+                    PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
+                        console.log('[Push] Action performed:', notification);
+                    });
+                } catch (e) {
+                    console.warn('[Push] Error:', e);
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,181 @@
+1. DATOS DEL NEGOCIO
+------------------------
+Nombre comercial: Focus Club
+Dirección: Calle Peñaranda de Bracamonte, 69, Local 4
+Villa de Vallecas, 28051 Madrid, España
+
+Teléfono: +34 689 93 33 39
+Instagram: https://www.instagram.com/focus_club_vallecas/
+Web actual: No dispone de web corporativa activa
+
+Tipo de negocio:
+Centro de entrenamiento personal
+
+Modelo:
+Entrenamiento personalizado exclusivo 1:1
+
+
+2. PROPUESTA DE VALOR
+------------------------
+Focus Club es un centro especializado en:
+- Hipertrofia (ganancia muscular)
+- Tonificación
+- Recomposición corporal
+- Entrenamiento de fuerza
+- Seguimiento personalizado
+- Asesoramiento nutricional
+
+Diferencial:
+No es un gimnasio convencional.
+El modelo es 100% personalizado (1 entrenador por cliente).
+No compite por precio, compite por resultados.
+
+
+3. ANÁLISIS DE INSTAGRAM
+------------------------
+Cuenta oficial: @focus_club_vallecas
+
+Tipo de contenido:
+- Vídeos reales de entrenamientos
+- Ejecución técnica de ejercicios
+- Clientes reales entrenando
+- Mensajes de disciplina y constancia
+- Filosofía de esfuerzo y enfoque
+- Construcción de comunidad ("focuseros")
+
+Valores que transmite:
+- Profesionalidad
+- Cercanía
+- Disciplina
+- Evolución
+- Resultados reales
+
+Indicaciones para la web:
+- Usar imágenes reales extraídas del Instagram
+- Integrar el feed de Instagram
+- Priorizar vídeos o fotos reales frente a imágenes de stock
+- Mantener el mismo tono motivacional y disciplinado
+- Usar frases tipo: enfoque, constancia, evolución, resultados
+
+
+4. IDENTIDAD VISUAL
+------------------------
+Colores corporativos:
+- Negro (#000000)
+- Verde oscuro (#0B3D2E)
+- Verde acento (#1B5E20)
+- Blanco (#FFFFFF)
+- Gris oscuro (#1C1C1C)
+
+Estilo visual:
+- Oscuro
+- Deportivo
+- Elegante
+- Minimalista
+- Profesional
+- Potente
+
+Evitar:
+- Estética de gimnasio low cost
+- Colores chillones
+- Diseño infantil o amateur
+
+
+5. POSICIONAMIENTO
+------------------------
+Focus Club debe posicionarse como:
+- Centro de entrenamiento personal premium en Vallecas
+- Especialista en recomposición corporal
+- Alternativa real a gimnasios masificados
+- Espacio de disciplina y resultados
+
+Claim sugerido:
+"Entrena con foco. Evoluciona de verdad."
+
+
+6. PÚBLICO OBJETIVO
+------------------------
+Personas entre 25 y 45 años
+Que:
+- Buscan resultados reales
+- Han probado gimnasios sin éxito
+- Necesitan seguimiento
+- Quieren motivación y estructura
+- Valoran la atención personalizada
+
+
+7. ESTRUCTURA WEB
+------------------------
+Secciones obligatorias:
+
+HOME
+- Imagen o vídeo hero potente
+- Claim principal
+- CTA claro: “Reserva tu primera sesión”
+- Beneficios resumidos
+
+MÉTODO FOCUS
+- Explicación del sistema 1:1
+- Diferencias frente a un gimnasio
+- Proceso de trabajo
+
+SERVICIOS
+- Hipertrofia
+- Tonificación
+- Recomposición corporal
+- Nutrición personalizada
+
+RESULTADOS
+- Casos reales
+- Transformaciones
+- Testimonios
+- Integración Instagram
+
+EQUIPO
+- Presentación del entrenador
+- Formación
+- Experiencia
+
+COMUNIDAD
+- Filosofía focuseros
+- Integración Instagram
+- Ambiente
+
+CONTACTO
+- Dirección visible
+- Teléfono clickable
+- Botón WhatsApp
+- Google Maps integrado
+- Formulario de contacto
+
+
+8. SEO LOCAL
+------------------------
+Palabras clave:
+- entrenador personal vallecas
+- gimnasio personal vallecas
+- entrenamiento 1 a 1 madrid
+- hipertrofia vallecas
+- tonificación madrid
+- recomposición corporal madrid
+
+Optimizar:
+- Títulos H1
+- Meta descripciones
+- Velocidad web
+- Responsive móvil
+- URLs limpias
+
+
+9. REQUISITOS KIT DIGITAL
+------------------------
+La web debe incluir:
+- Dominio y hosting
+- Certificado SSL
+- SEO básico
+- CMS editable
+- RGPD
+- Integración redes sociales
+- Formularios
+- WhatsApp
+- Diseño responsive

@@ -1,0 +1,66 @@
+graph TD
+    %% Estilos de los nodos
+    classDef frontend fill:#2C3E50,color:#ffffff,stroke:#34495E,stroke-width:2px;
+    classDef backend fill:#27AE60,color:#ffffff,stroke:#1E8449,stroke-width:2px;
+    classDef optional fill:#F39C12,color:#111111,stroke:#D35400,stroke-width:2px;
+    classDef external fill:#2980B9,color:#ffffff,stroke:#1B4F72,stroke-width:2px;
+    classDef db fill:#2D3748,color:#ffffff,stroke:#121417,stroke-width:2px;
+
+    %% Frontend
+    Web["Web corporativa<br>(Hostinger / Vercel)"]:::frontend
+    App["App móvil<br>(Android / iOS)"]:::frontend
+    Cliente["Área cliente<br>(Web / App)"]:::frontend
+
+    %% Backend Odoo
+    Odoo["Odoo Backend<br>(Gestión del centro)"]:::backend
+    Clientes["Clientes"]:::backend
+    Membresias["Membresías / Suscripciones"]:::backend
+    Facturacion["Pagos y facturación"]:::backend
+    Reservas["Reservas / Citas"]:::backend
+
+    %% BDD y cache
+    Postgres["Base de datos PostgreSQL<br>(Datos del centro)"]:::db
+    Redis["Cache / Cola de tareas (opcional)"]:::db
+    Backups["Almacenamiento de copias de seguridad"]:::external
+
+    %% Opcionales
+    Informes["Informes y métricas"]:::optional
+    Emails["Email Marketing"]:::optional
+    SMS["SMS Marketing"]:::optional
+    TPV["TPV físico"]:::optional
+
+    %% Servicios externos
+    Pagos["Pasarela de pago<br>Stripe / Redsys / PayPal"]:::external
+    Push["Notificaciones push (Firebase)"]:::external
+
+    %% Relaciones Frontend ↔ Backend ↔ DB
+    Web -->|"API (JSON-RPC / REST) segura"| Odoo
+    App -->|"API (JSON-RPC / REST) segura"| Odoo
+    Cliente -->|"API (JSON-RPC / REST) segura"| Odoo
+
+    %% Odoo con BDD y cache
+    Odoo -->|Almacena / Lee datos| Postgres
+    Odoo -->|Cache y tareas| Redis
+    Postgres -->|Copia de seguridad automática| Backups
+
+    %% Backend módulos
+    Odoo --> Clientes
+    Odoo --> Membresias
+    Odoo --> Facturacion
+    Odoo --> Reservas
+    Odoo --> Informes
+    Odoo --> Emails
+    Odoo --> SMS
+    Odoo --> TPV
+
+    %% Pagos externos
+    Facturacion -->|Procesa pagos| Pagos
+    Cliente -->|Realiza pagos / reservas| Pagos
+    App -->|Recibe notificaciones push| Push
+
+    %% Flujo de información
+    Clientes -->|Historial y datos| Cliente
+    Membresias -->|Estado de suscripciones| Cliente
+    Reservas -->|Disponibilidad y horarios| Cliente
+
+
