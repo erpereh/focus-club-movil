@@ -1,0 +1,62 @@
+{
+  "expo": {
+    "name": "Focus Club",
+    "slug": "focus-club-movil",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "focusclub",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.davidwar1.focusclubmovil",
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#0a0a0a"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.davidwar1.focusclubmovil",
+      "permissions": [
+        "NOTIFICATIONS"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#4CAF50"
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#0a0a0a"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "a8051bbe-1656-4372-aded-3912d218c767"
+      }
+    },
+    "owner": "davidwar1",
+    "updates": {
+      "url": "https://u.expo.dev/a8051bbe-1656-4372-aded-3912d218c767"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    }
+  }
+}

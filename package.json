@@ -1,30 +1,42 @@
 {
-    "name": "focus-club-vallecas",
-    "private": true,
-    "version": "1.0.0",
-    "type": "module",
-    "engines": {
-        "node": ">=20.0.0"
-    },
-    "scripts": {
-        "dev": "vite",
-        "build": "vite build",
-        "preview": "vite preview",
-        "cap:sync": "npx cap sync",
-        "cap:open:ios": "npx cap open ios",
-        "cap:open:android": "npx cap open android",
-        "cap:build": "vite build && npx cap sync"
-    },
-    "devDependencies": {
-        "vite": "^6.1.0"
-    },
-    "dependencies": {
-        "@capacitor/android": "^8.1.0",
-        "@capacitor/cli": "^8.1.0",
-        "@capacitor/core": "^8.1.0",
-        "@capacitor/ios": "^8.1.0",
-        "@capacitor/push-notifications": "^8.0.1",
-        "@capacitor/splash-screen": "^8.0.1",
-        "@capacitor/status-bar": "^8.0.1"
-    }
+  "name": "focus-club-movil",
+  "private": true,
+  "version": "1.0.0",
+  "main": "node_modules/expo/AppEntry.js",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "build-and-deploy": "npx expo export --platform web && npx eas-cli deploy",
+    "cap:sync": "npx cap sync",
+    "cap:open:android": "npx cap open android",
+    "cap:build": "vite build && npx cap sync"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.1.0",
+    "@capacitor/cli": "^8.1.0",
+    "@capacitor/core": "^8.1.0",
+    "@capacitor/ios": "^8.1.0",
+    "@capacitor/push-notifications": "^8.0.1",
+    "@capacitor/splash-screen": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.1",
+    "@expo/metro-runtime": "~5.0.5",
+    "expo": "~53.0.27",
+    "expo-notifications": "~0.31.1",
+    "expo-splash-screen": "~0.30.10",
+    "expo-status-bar": "~2.2.3",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "react-native": "0.79.6",
+    "react-native-safe-area-context": "5.4.0",
+    "react-native-web": "^0.20.0",
+    "react-native-webview": "13.13.5"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.25.2",
+    "vite": "^6.1.0"
+  }
 }
