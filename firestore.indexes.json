@@ -17,6 +17,20 @@
           "order": "ASCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "reservas",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "uid_usuario",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "fecha_sesion",
+          "order": "DESCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": []

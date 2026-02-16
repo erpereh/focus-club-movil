@@ -24,6 +24,51 @@
             gap: 20px;
             transition: opacity 0.5s ease;
         }
+
+        /* Extra styles for Mis Citas */
+        .cita-card {
+            background: rgba(30, 30, 30, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+        }
+
+        .cita-card:hover {
+            background: rgba(40, 40, 40, 0.8);
+            transform: translateX(5px);
+            border-color: rgba(76, 175, 80, 0.3);
+        }
+
+        .cita-date {
+            font-family: var(--font-display);
+            font-size: 1.2rem;
+            color: var(--white);
+        }
+
+        .cita-info {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        .btn-cancel {
+            background: rgba(244, 67, 54, 0.1);
+            color: #f44336;
+            border: 1px solid rgba(244, 67, 54, 0.2);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+
+        .btn-cancel:hover {
+            background: rgba(244, 67, 54, 0.2);
+            transform: scale(1.05);
+        }
     </style>
 </head>
 
@@ -161,6 +206,19 @@
                         <div class="icon-box" style="background: rgba(255,152,0,0.1); color: #ff9800;">
                             <i class="fa-solid fa-chart-pie"></i>
                         </div>
+                    </div>
+                </div>
+
+                <!-- MIS CITAS Section -->
+                <h3
+                    style="margin-bottom: 25px; font-family: var(--font-display); font-size: 1.5rem; color: var(--white); letter-spacing: 1px;">
+                    Mis Próximas Citas
+                </h3>
+                <div id="mis-citas-container" style="margin-bottom: 50px; display: grid; gap: 15px;">
+                    <!-- JS will populate this -->
+                    <div
+                        style="text-align: center; color: #666; padding: 20px; background: rgba(255,255,255,0.02); border-radius: 12px;">
+                        Cargando citas...
                     </div>
                 </div>
 
@@ -364,13 +422,20 @@
             getPerfilUsuario,
             crearReserva,
             getProximaReserva,
+            getReservasUsuario,
+            activarPlan,
+            cancelarReserva,
             seedEntrenadores,
-            seedPlanes
+            seedPlanes,
+            getUsuarioActual
         } from './firebase.js';
 
         // Estado global (ahora se llena desde Firebase)
         let currentUserProfile = null;
         let dbTrainers = [];
+
+        // Expose to window so global handlers can use them
+        window.getUsuarioActual = getUsuarioActual;
 
         // ─── INITIALIZATION ───
         async function initData(user) {
@@ -398,10 +463,13 @@
                 dbTrainers = await getEntrenadores();
                 renderTrainers(dbTrainers);
 
-                // 4. Load Next Session
+                // 4. Load Next Session & List
                 console.log('[Dashboard] Loading next session...');
                 const nextReserva = await getProximaReserva();
                 updateNextSessionUI(nextReserva);
+
+                const allReservas = await getReservasUsuario();
+                renderMisCitas(allReservas);
 
                 // 5. Load Plans
                 console.log('[Dashboard] Loading plans...');
@@ -560,8 +628,34 @@
             });
         }
 
-        window.selectPlan = function (planId) {
-            alert(`Plan seleccionado. Integración de pagos próximamente.`);
+        window.selectPlan = async function (planId) {
+            if (!currentUserProfile) return;
+
+            if (confirm("¿Confirmar cambio de plan? Esto actualizará tus sesiones disponibles.")) {
+                try {
+                    const btn = event.target;
+                    const originalText = btn.innerText;
+                    btn.innerText = "Procesando...";
+                    btn.disabled = true;
+
+                    await activarPlan(currentUserProfile.uid, planId);
+
+                    // Refresh Profile
+                    const profile = await getPerfilUsuario(currentUserProfile.uid);
+                    updateProfileUI(getUsuarioActual(), profile);
+
+                    alert("✅ ¡Plan activado correctamente!");
+                    window.switchTab('inicio');
+                } catch (err) {
+                    console.error(err);
+                    alert("Error activando plan: " + err.message);
+                } finally {
+                    // Restore button if we didn't navigate away (or if error)
+                    const btns = document.querySelectorAll('.btn-plan');
+                    btns.forEach(b => { b.disabled = false; b.innerText = b.innerText === "Procesando..." ? "Seleccionar" : b.innerText; });
+                    // Note: simplistic restore, real app might be more specific
+                }
+            }
         }
 
         // ─── BOOKING LOGIC (Connect to Firestore) ───
@@ -614,9 +708,12 @@
                 currentUserProfile.sesiones_restantes--;
                 updateProfileUI(getUsuarioActual(), currentUserProfile);
 
-                // Refresh Next Session
+                // Refresh Next Session & List
                 const nextReserva = await getProximaReserva();
                 updateNextSessionUI(nextReserva);
+
+                const allReservas = await getReservasUsuario();
+                renderMisCitas(allReservas);
 
                 window.showToast("✅ Reserva confirmada");
                 window.switchTab('inicio');
@@ -625,8 +722,8 @@
                 window.selectedTrainerId = null;
                 window.selectedDate = null;
                 window.selectedTime = null;
-                window.renderTrainers(); // re-render to clear selection
-                window.renderCalendar(); // re-render
+                window.renderTrainers();
+                window.renderCalendar();
                 document.getElementById('time-selection-area').style.display = 'none';
 
                 btn.innerText = originalText;
@@ -637,6 +734,93 @@
                 alert("Error al crear reserva: " + err.message);
                 document.getElementById('btn-confirm').innerText = "CONFIRMAR RESERVA";
                 document.getElementById('btn-confirm').disabled = false;
+            }
+        }
+
+        // ─── RESERVATIONS LIST RENDER ───
+        window.renderMisCitas = function (reservas) {
+            const container = document.getElementById('mis-citas-container');
+            if (!container) return;
+
+            if (!reservas || reservas.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; color: #666; padding: 20px; background: rgba(255,255,255,0.02); border-radius: 12px;">
+                        <i class="fa-regular fa-calendar-xmark" style="font-size: 2rem; margin-bottom: 10px; opacity: 0.5;"></i>
+                        <p style="margin: 0; font-size: 0.9rem;">No tienes citas programadas.</p>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = '';
+            // Show only upcoming (or recent)? User asked for list. Let's show all but highlight upcoming.
+            // Actually user said "Mis Citas... Al hacer clic...".
+            // Let's sort by date descending (already done in query).
+
+            reservas.forEach(reserva => {
+                const date = reserva.fecha_sesion.toDate();
+                const now = new Date();
+                const isPast = date < now;
+                const isCancelled = reserva.estado === 'cancelada';
+
+                const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+                const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+                const dateStr = `${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]}`;
+
+                const card = document.createElement('div');
+                card.className = 'cita-card';
+                if (isCancelled) card.style.opacity = '0.5';
+
+                let actionBtn = '';
+                if (!isPast && !isCancelled) {
+                    actionBtn = `<button class="btn-cancel" onclick="handleCancelar('${reserva.id}')">Cancelar</button>`;
+                } else if (isCancelled) {
+                    actionBtn = `<span style="color: #f44336; font-size: 0.8rem;">Cancelada</span>`;
+                } else {
+                    actionBtn = `<span style="color: #666; font-size: 0.8rem;">Completada</span>`;
+                }
+
+                card.innerHTML = `
+                    <div style="display: flex; gap: 15px; align-items: center;">
+                        <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px; text-align: center; min-width: 60px;">
+                            <div style="font-weight: 700; font-size: 1.1rem; color: var(--white);">${date.getDate()}</div>
+                            <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--gray-light);">${months[date.getMonth()]}</div>
+                        </div>
+                        <div>
+                            <div style="color: var(--white); font-weight: 600; font-size: 1rem;">${reserva.nombre_clase}</div>
+                            <div class="cita-info">
+                                <i class="fa-regular fa-clock" style="margin-right: 5px;"></i> ${reserva.hora} 
+                                <span style="margin: 0 5px;">•</span> 
+                                <i class="fa-solid fa-user-ninja" style="margin-right: 5px;"></i> ${reserva.entrenador_nombre}
+                            </div>
+                        </div>
+                    </div>
+                    <div>${actionBtn}</div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        window.handleCancelar = async function (reservaId) {
+            if (!confirm("¿Seguro que quieres cancelar esta cita? Te devolveremos la sesión.")) return;
+
+            try {
+                // Optimistic update? Better wait.
+                await cancelarReserva(reservaId);
+
+                // Refresh data
+                const profile = await getPerfilUsuario(currentUserProfile.uid);
+                updateProfileUI(getUsuarioActual(), profile);
+
+                const nextReserva = await getProximaReserva();
+                updateNextSessionUI(nextReserva);
+
+                const allReservas = await getReservasUsuario();
+                renderMisCitas(allReservas);
+
+                window.showToast("Cita cancelada. Sesión devuelta.");
+            } catch (e) {
+                console.error(e);
+                alert("Error cancelando: " + e.message);
             }
         }
 

@@ -136,6 +136,28 @@ export async function sincronizarUsuario(user, nombreOverride) {
     }
 }
 
+/** Activa un plan para el usuario */
+export async function activarPlan(uid, planId) {
+    const planRef = doc(db, 'planes', planId);
+    const planSnap = await getDoc(planRef);
+    if (!planSnap.exists()) throw new Error('Plan no encontrado');
+    const planData = planSnap.data();
+
+    const sesionesNuevas = planData.sesiones_incluidas || 0;
+
+    // Calculate renewal date (30 days from now)
+    const renewalDate = new Date();
+    renewalDate.setDate(renewalDate.getDate() + 30);
+
+    const userRef = doc(db, 'usuarios', uid);
+    await updateDoc(userRef, {
+        plan_activo: planData.nombre,
+        sesiones_totales: sesionesNuevas,
+        sesiones_restantes: sesionesNuevas,
+        fecha_renovacion: Timestamp.fromDate(renewalDate)
+    });
+}
+
 /** Obtiene el perfil completo del usuario */
 export async function getPerfilUsuario(uid) {
     const ref = doc(db, 'usuarios', uid);
@@ -223,14 +245,32 @@ export async function getReservasUsuario() {
     const user = auth.currentUser;
     if (!user) return [];
 
+    // OPTIMIZACIÓN: Fetch all by user, filter/sort in memory to avoid composite index
     const q = query(
         collection(db, 'reservas'),
-        where('uid_usuario', '==', user.uid),
-        where('estado', '==', 'confirmada'),
-        orderBy('fecha_sesion', 'asc')
+        where('uid_usuario', '==', user.uid)
     );
-    const snap = await getDocs(q);
-    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+    try {
+        const snap = await getDocs(q);
+        const reservas = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+        // Filter confirmed only? User might want to see history.
+        // Let's filter confirmed if needed, but for "Mis Citas" we want history too? 
+        // Previously filter was 'confirmada'. Let's keep it consistent with previous logic if possible, 
+        // but maybe show all non-cancelled? Or show cancelled too?
+        // Ah, the previous code filtered by 'confirmada'. 
+        // Let's filter in JS to include confirming/cancelled for history if desired, 
+        // but for now let's reproduce the previous logic: 'confirmada' only.
+
+        return reservas
+            .filter(r => r.estado === 'confirmada')
+            .sort((a, b) => b.fecha_sesion.seconds - a.fecha_sesion.seconds);
+
+    } catch (e) {
+        console.error("Error fetching reservations:", e);
+        return [];
+    }
 }
 
 /** Obtiene la próxima reserva futura del usuario */
@@ -239,18 +279,27 @@ export async function getProximaReserva() {
     if (!user) return null;
 
     const now = Timestamp.now();
+
+    // OPTIMIZACIÓN: Fetch all confirmed by user, filter future in memory
+    // This avoids complex composite index on (uid, estado, fecha) which might be building
     const q = query(
         collection(db, 'reservas'),
         where('uid_usuario', '==', user.uid),
-        where('estado', '==', 'confirmada'),
-        where('fecha_sesion', '>=', now),
-        orderBy('fecha_sesion', 'asc'),
-        limit(1)
+        where('estado', '==', 'confirmada')
     );
-    const snap = await getDocs(q);
-    return snap.docs.length > 0
-        ? { id: snap.docs[0].id, ...snap.docs[0].data() }
-        : null;
+
+    try {
+        const snap = await getDocs(q);
+        const reservas = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+        const futuras = reservas.filter(r => r.fecha_sesion.seconds >= now.seconds);
+        futuras.sort((a, b) => a.fecha_sesion.seconds - b.fecha_sesion.seconds);
+
+        return futuras.length > 0 ? futuras[0] : null;
+    } catch (e) {
+        console.error("Error fetching next reservation:", e);
+        return null;
+    }
 }
 
 /** Cancela una reserva y devuelve la sesión al usuario */
