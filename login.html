@@ -520,32 +520,55 @@
         };
 
         // ─── Google Login ───────────────────────────────────
-        window.handleGoogle = function () {
+        // ─── Google Login (POPUP FLOW) ──────────────────────
+        window.handleGoogle = async function () {
             setLoading(btnGoogle, true);
-            statusEl.textContent = 'Redirigiendo a Google...';
+            statusEl.textContent = 'Contactando con Google (Popup)...';
             statusEl.className = 'auth-status';
-            loginConGoogle();
-        };
 
-        // ─── Redirect Result (post-Google) ──────────────────
-        getResultadoRedirect().then(async (result) => {
-            console.log('[Login] Check Redirect Result:', result);
-            if (result && result.user) {
-                console.log('[Login] Redirect successful, user:', result.user.uid);
-                statusEl.textContent = 'Accediendo...';
+            try {
+                // Ahora loginConGoogle usa signInWithPopup (ver firebase.js)
+                const result = await loginConGoogle();
+                console.log('[Login] Google Popup Success:', result.user.uid);
+
+                statusEl.textContent = '¡Acceso correcto! Entrando...';
                 statusEl.className = 'auth-status success';
-                await sincronizarUsuario(result.user);
-                notifyNativeAndRedirect();
-            } else {
-                console.log('[Login] No redirect result found.');
-            }
-        }).catch((err) => {
-            console.error('[Login] Redirect error:', err);
-            if (err.code !== 'auth/popup-closed-by-user') {
-                statusEl.textContent = traducirError(err.code);
+
+                // Sincronizar perfil
+                try {
+                    await sincronizarUsuario(result.user);
+                } catch (e) {
+                    console.error('[Login] Error sync profile:', e);
+                }
+
+                // Dar tiempo a la UI y notificar
+                setTimeout(() => {
+                    notifyNativeAndRedirect();
+                }, 800);
+
+            } catch (err) {
+                console.error('[Login] Google Popup Error:', err);
+                setLoading(btnGoogle, false);
+
+                if (err.code === 'auth/popup-closed-by-user') {
+                    statusEl.textContent = 'Has cerrado la ventana de inicio de sesión.';
+                } else if (err.code === 'auth/cancelled-popup-request') {
+                    statusEl.textContent = '';
+                } else if (err.code === 'auth/unauthorized-domain') {
+                    statusEl.textContent = 'Dominio no autorizado (Configuración Firebase).';
+                } else {
+                    statusEl.textContent = 'Error: ' + err.message;
+                }
                 statusEl.className = 'auth-status error';
             }
-        });
+        };
+
+        // ─── Redirect Result (LEGACY) ───────────────────────
+        // Desactivado al usar Popup. Si se requiere volver a Redirect, descomentar.
+        /*
+        console.log("Procesando retorno de Google...");
+        getResultadoRedirect().then(...)
+        */
 
         // ─── Auth State Observer ────────────────────────────
         // ─── Auth State Observer ────────────────────────────

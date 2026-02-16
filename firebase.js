@@ -4,6 +4,7 @@ import {
     getAuth,
     GoogleAuthProvider,
     signInWithRedirect,
+    signInWithPopup,
     getRedirectResult,
     onAuthStateChanged,
     signOut,
@@ -62,7 +63,8 @@ const googleProvider = new GoogleAuthProvider();
 // ═════════════════════════════════════════════════════════
 
 export function loginConGoogle() {
-    return signInWithRedirect(auth, googleProvider);
+    // Cambiamos a Popup para evitar problemas de redirección y cookies de terceros
+    return signInWithPopup(auth, googleProvider);
 }
 
 export function getResultadoRedirect() {

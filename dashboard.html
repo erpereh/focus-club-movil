@@ -412,11 +412,11 @@
                         <div style="padding: 15px; background: rgba(0,0,0,0.3); border-radius: 8px;">
                             <label style="display: block; font-size: 0.8rem; margin-bottom: 5px;">Nombre
                                 Completo</label>
-                            <div style="color: white; font-size: 1.1rem;">Juan Pérez</div>
+                            <div id="profile-name" style="color: white; font-size: 1.1rem;">Cargando...</div>
                         </div>
                         <div style="padding: 15px; background: rgba(0,0,0,0.3); border-radius: 8px;">
                             <label style="display: block; font-size: 0.8rem; margin-bottom: 5px;">Email</label>
-                            <div style="color: white; font-size: 1.1rem;">juan.perez@email.com</div>
+                            <div id="profile-email" style="color: white; font-size: 1.1rem;">Cargando...</div>
                         </div>
                     </div>
                 </div>
@@ -544,11 +544,11 @@
                 sessionsEl.innerHTML = `${left} <span style="font-size: 1.5rem; color: #666; font-weight: 300;">/ ${total}</span>`;
             }
 
-            // Perfil
-            const profileName = document.querySelector('#perfil .card div:nth-child(1) div');
-            const profileEmail = document.querySelector('#perfil .card div:nth-child(2) div');
-            if (profileName) profileName.textContent = displayName;
-            if (profileEmail) profileEmail.textContent = authData.email;
+            // Perfil Tab
+            const profileName = document.getElementById('profile-name');
+            const profileEmail = document.getElementById('profile-email');
+            if (profileName) profileName.textContent = profileData?.nombre || displayName;
+            if (profileEmail) profileEmail.textContent = profileData?.email || authData.email;
         }
 
         function updateNextSessionUI(reserva) {
@@ -861,13 +861,32 @@
         }
 
         // ─── AUTH GUARD ───
+        // ─── AUTH GUARD ───
+        // Show loading state by default (overlay is in HTML)
+
         onAuthChange((user) => {
-            if (!user) {
-                window.location.href = './login.html';
-                return;
+            if (user) {
+                console.log('[Dashboard] User authenticated:', user.uid);
+                initData(user);
+            } else {
+                console.warn('[Dashboard] No user found. Waiting...');
+                // STOP AUTOMATIC REDIRECT to debug loop
+                // window.location.href = './login.html';
+
+                const overlay = document.getElementById('loadingOverlay');
+                if (overlay) {
+                    overlay.innerHTML = `
+                        <div style="text-align:center; padding:20px; color:white;">
+                            <h2>Sesión no detectada</h2>
+                            <p style="color:#aaa; margin:10px 0;">Firebase no encuentra tu usuario aquí.</p>
+                            <button onclick="window.location.href='./login.html'" style="padding:10px 20px; background:var(--green-glow); border:none; font-weight:bold; cursor:pointer;">
+                                Volver al Login
+                            </button>
+                        </div>
+                    `;
+                    overlay.style.opacity = '1';
+                }
             }
-            // Init app data
-            initData(user);
         });
 
         // Logout
