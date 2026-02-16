@@ -5,11 +5,25 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "uid_usuario",
+          "fieldPath": "estado",
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "fecha_sesion",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "reservas",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
           "fieldPath": "estado",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "hora",
           "order": "ASCENDING"
         },
         {
@@ -29,6 +43,24 @@
         {
           "fieldPath": "fecha_sesion",
           "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "reservas",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "uid_usuario",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "estado",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "fecha_sesion",
+          "order": "ASCENDING"
         }
       ]
     }

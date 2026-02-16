@@ -29,6 +29,7 @@ import {
     limit,
     serverTimestamp,
     Timestamp,
+    onSnapshot
 } from 'firebase/firestore';
 
 // ─── Config ──────────────────────────────────────────────
@@ -211,7 +212,42 @@ export async function getPlanes() {
 //  FIRESTORE: Reservas
 // ═════════════════════════════════════════════════════════
 
-/** Crea una reserva y descuenta sesión */
+/** 
+ * Verifica si una sesión está disponible:
+ * 1. El usuario no tiene otra reserva a la misma hora.
+ * 2. La sesión no ha alcanzado su capacidad máxima (default 1).
+ */
+export async function checkDisponibilidad(uid, entrenador_id, fecha_sesion, hora) {
+    const start = new Date(fecha_sesion);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(fecha_sesion);
+    end.setHours(23, 59, 59, 999);
+
+    const q = query(
+        collection(db, 'reservas'),
+        where('fecha_sesion', '>=', Timestamp.fromDate(start)),
+        where('fecha_sesion', '<=', Timestamp.fromDate(end)),
+        where('hora', '==', hora),
+        where('estado', '==', 'confirmada')
+    );
+
+    const snap = await getDocs(q);
+    const reservas = snap.docs.map(d => d.data());
+
+    // 1. Solapamiento personal
+    const personal = reservas.find(r => r.uid_usuario === uid);
+    if (personal) throw new Error('YA_TIENES_CITA');
+
+    // 2. Ocupación de la sesión (entrenador específico)
+    const ocupadas = reservas.filter(r => r.entrenador_id === entrenador_id).length;
+    const capacidadMax = 1; // Por ahora 1 entrenador = 1 persona, escalable en el futuro
+
+    if (ocupadas >= capacidadMax) throw new Error('SESION_LLENA');
+
+    return true;
+}
+
+/** Crea una reserva y descuenta sesión con validación de disponibilidad */
 export async function crearReserva({
     entrenador_id,
     entrenador_nombre,
@@ -221,6 +257,9 @@ export async function crearReserva({
 }) {
     const user = auth.currentUser;
     if (!user) throw new Error('No autenticado');
+
+    // Validar disponibilidad antes de nada
+    await checkDisponibilidad(user.uid, entrenador_id, fecha_sesion, hora);
 
     // Descontar sesión
     await descontarSesion(user.uid);
@@ -238,6 +277,28 @@ export async function crearReserva({
     });
 
     return reserva.id;
+}
+
+/** Escucha cambios en reservas para actualizar disponibilidad en tiempo real */
+export function listenOcupacion(fecha_sesion, callback) {
+    const start = new Date(fecha_sesion);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(fecha_sesion);
+    end.setHours(23, 59, 59, 999);
+
+    const q = query(
+        collection(db, 'reservas'),
+        where('fecha_sesion', '>=', Timestamp.fromDate(start)),
+        where('fecha_sesion', '<=', Timestamp.fromDate(end)),
+        where('estado', '==', 'confirmada')
+    );
+
+    return onSnapshot(q, (snap) => {
+        const reservas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        callback(reservas);
+    }, (err) => {
+        console.error('[Firebase] listenOcupacion error:', err);
+    });
 }
 
 /** Obtiene las reservas del usuario actual, ordenadas por fecha */

@@ -69,6 +69,23 @@
             background: rgba(244, 67, 54, 0.2);
             transform: scale(1.05);
         }
+
+        /* Time Slot States */
+        .time-slot.full {
+            background: rgba(255, 50, 50, 0.05) !important;
+            border-color: rgba(255, 50, 50, 0.2) !important;
+            color: #ff4d4d !important;
+            cursor: not-allowed !important;
+            opacity: 0.8;
+        }
+
+        .time-slot.user-booked {
+            background: rgba(76, 175, 80, 0.1) !important;
+            border-color: var(--green-glow) !important;
+            color: var(--green-glow) !important;
+            cursor: default !important;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.1);
+        }
     </style>
 </head>
 
@@ -217,8 +234,8 @@
                 <div id="mis-citas-container" style="margin-bottom: 50px; display: grid; gap: 15px;">
                     <!-- JS will populate this -->
                     <div
-                        style="text-align: center; color: #666; padding: 20px; background: rgba(255,255,255,0.02); border-radius: 12px;">
-                        Cargando citas...
+                        style="display: flex; align-items: center; justify-content: center; text-align: center; color: rgba(255,255,255,0.2); padding: 40px; background: rgba(255,255,255,0.01); border-radius: 16px; min-height: 150px;">
+                        <p style="margin: 0; font-size: 0.9rem; font-weight: 300;">Cargando tus citas...</p>
                     </div>
                 </div>
 
@@ -427,12 +444,15 @@
             cancelarReserva,
             seedEntrenadores,
             seedPlanes,
-            getUsuarioActual
+            getUsuarioActual,
+            listenOcupacion
         } from './firebase.js';
 
         // Estado global (ahora se llena desde Firebase)
         let currentUserProfile = null;
         let dbTrainers = [];
+        let unsubscribeOccupancy = null;
+        window.currentDateReservas = [];
 
         // Expose to window so global handlers can use them
         window.getUsuarioActual = getUsuarioActual;
@@ -731,7 +751,13 @@
 
             } catch (err) {
                 console.error(err);
-                alert("Error al crear reserva: " + err.message);
+                if (err.message === 'YA_TIENES_CITA') {
+                    alert('⚠️ Ya tienes una reserva confirmada a esta misma hora.\nPor favor, elige otro horario.');
+                } else if (err.message === 'SESION_LLENA') {
+                    alert('❌ Lo sentimos, esta sesión acaba de completarse.\nPor favor, elige otro entrenador o un horario diferente.');
+                } else {
+                    alert("Error al reservar: " + err.message);
+                }
                 document.getElementById('btn-confirm').innerText = "CONFIRMAR RESERVA";
                 document.getElementById('btn-confirm').disabled = false;
             }
@@ -744,9 +770,8 @@
 
             if (!reservas || reservas.length === 0) {
                 container.innerHTML = `
-                    <div style="text-align: center; color: #666; padding: 20px; background: rgba(255,255,255,0.02); border-radius: 12px;">
-                        <i class="fa-regular fa-calendar-xmark" style="font-size: 2rem; margin-bottom: 10px; opacity: 0.5;"></i>
-                        <p style="margin: 0; font-size: 0.9rem;">No tienes citas programadas.</p>
+                    <div style="display: flex; align-items: center; justify-content: center; text-align: center; color: rgba(255,255,255,0.3); padding: 60px 20px; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); border-radius: 16px; min-height: 150px;">
+                        <p style="margin: 0; font-size: 0.95rem; font-weight: 300; letter-spacing: 0.5px;">No tienes citas programadas.</p>
                     </div>`;
                 return;
             }
@@ -924,6 +949,7 @@
         }
 
         window.selectDay = function (day, el) {
+            console.log('[Booking] Day selected:', day);
             document.querySelectorAll('.calendar-day').forEach(d => d.classList.remove('selected'));
             el.classList.add('selected');
             window.selectedDate = { day, month: window.currentCalendarMonth, year: window.currentCalendarYear };
@@ -934,25 +960,97 @@
 
             const timeArea = document.getElementById('time-selection-area');
             timeArea.style.display = 'block';
-            window.generateTimeSlots();
             window.selectedTime = null;
+
+            // Optional: Scroll to time area on mobile
+            if (window.innerWidth < 768) {
+                timeArea.scrollIntoView({ behavior: 'smooth' });
+            }
+
+            // Fallback: clear the grid immediately so it doesn't show old data
+            window.currentDateReservas = [];
+            window.generateTimeSlots();
+
+            // REAL-TIME LISTENER for the selected day
+            if (unsubscribeOccupancy) unsubscribeOccupancy();
+            try {
+                unsubscribeOccupancy = listenOcupacion(dateObj, (reservas) => {
+                    console.log('[Booking] Real-time update for day:', day, 'Reservas count:', reservas.length);
+                    window.currentDateReservas = reservas;
+                    window.generateTimeSlots();
+                });
+            } catch (err) {
+                console.error('[Booking] Error setting up listener:', err);
+                // Fallback rendering
+                window.generateTimeSlots();
+            }
         }
 
         window.generateTimeSlots = function () {
+            console.log('[Booking] generateTimeSlots called. selectedTrainerId:', window.selectedTrainerId);
             const container = document.getElementById('slots-grid');
+            if (!container) return;
             container.innerHTML = '';
-            const all = ["09:00", "10:00", "11:00", "12:00", "16:00", "17:00", "18:00", "19:00", "20:00"];
-            all.forEach(time => {
+
+            const times = ["09:00", "10:00", "11:00", "12:00", "16:00", "17:00", "18:00", "19:00", "20:00"];
+            const now = new Date();
+            const user = typeof getUsuarioActual === 'function' ? getUsuarioActual() : null;
+            const userId = user ? user.uid : null;
+
+            const isToday = window.selectedDate &&
+                window.selectedDate.day === now.getDate() &&
+                window.selectedDate.month === now.getMonth() &&
+                window.selectedDate.year === now.getFullYear();
+
+            times.forEach(time => {
                 const btn = document.createElement('button');
                 btn.className = 'time-slot';
-                btn.innerText = time;
-                btn.onclick = () => {
-                    document.querySelectorAll('.time-slot').forEach(b => b.classList.remove('selected'));
+
+                // 1. Past check
+                let isPast = false;
+                if (isToday) {
+                    const [h, m] = time.split(':');
+                    const slotTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), parseInt(h), parseInt(m));
+                    if (slotTime < now) isPast = true;
+                }
+
+                // 2. Data check
+                const resArray = window.currentDateReservas || [];
+                const reservasHora = resArray.filter(r => r.hora === time);
+                const ocupadaPorMi = userId ? reservasHora.find(r => r.uid_usuario === userId) : null;
+                const ocupadaGlobal = (window.selectedTrainerId && window.selectedTrainerId !== 'any')
+                    ? reservasHora.find(r => r.entrenador_id === window.selectedTrainerId)
+                    : null;
+
+                if (isPast) {
+                    btn.classList.add('disabled-past');
+                    btn.style.opacity = '0.3';
+                    btn.innerText = time;
+                    btn.disabled = true;
+                } else if (ocupadaPorMi) {
+                    btn.classList.add('user-booked');
+                    btn.innerHTML = `${time} <span style="font-size:0.6rem; display:block; opacity:0.8;">RESERVADO</span>`;
+                    btn.disabled = true;
+                } else if (ocupadaGlobal) {
+                    btn.classList.add('full');
+                    btn.innerHTML = `${time} <span style="font-size:0.6rem; display:block; opacity:0.8;">COMPLETO</span>`;
+                    btn.disabled = true;
+                } else {
+                    btn.innerText = time;
+                    btn.onclick = () => {
+                        document.querySelectorAll('.time-slot').forEach(b => b.classList.remove('selected'));
+                        btn.classList.add('selected');
+                        window.selectedTime = time;
+                    };
+                }
+
+                if (window.selectedTime === time && !btn.disabled) {
                     btn.classList.add('selected');
-                    window.selectedTime = time;
-                };
+                }
+
                 container.appendChild(btn);
             });
+            console.log('[Booking] generateTimeSlots finished. Slots added:', container.children.length);
         }
 
         window.showToast = function (message) {
