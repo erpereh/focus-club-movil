@@ -29,7 +29,8 @@ import {
     limit,
     serverTimestamp,
     Timestamp,
-    onSnapshot
+    onSnapshot,
+    runTransaction
 } from 'firebase/firestore';
 
 // ─── Config ──────────────────────────────────────────────
@@ -247,7 +248,7 @@ export async function checkDisponibilidad(uid, entrenador_id, fecha_sesion, hora
     return true;
 }
 
-/** Crea una reserva y descuenta sesión con validación de disponibilidad */
+/** Crea una reserva y descuenta sesión con validación de disponibilidad atómica */
 export async function crearReserva({
     entrenador_id,
     entrenador_nombre,
@@ -258,25 +259,78 @@ export async function crearReserva({
     const user = auth.currentUser;
     if (!user) throw new Error('No autenticado');
 
-    // Validar disponibilidad antes de nada
-    await checkDisponibilidad(user.uid, entrenador_id, fecha_sesion, hora);
+    // 1. Validar fecha pasada (Server-side check)
+    const now = new Date();
+    const [h, m] = hora.split(':');
+    const slotTime = new Date(fecha_sesion);
+    slotTime.setHours(parseInt(h), parseInt(m), 0, 0);
 
-    // Descontar sesión
-    await descontarSesion(user.uid);
+    if (slotTime < now) {
+        throw new Error('FECHA_PASADA');
+    }
 
-    // Crear reserva
-    const reserva = await addDoc(collection(db, 'reservas'), {
-        uid_usuario: user.uid,
-        entrenador_id: entrenador_id || '',
-        entrenador_nombre: entrenador_nombre || '',
-        fecha_sesion: Timestamp.fromDate(fecha_sesion),
-        hora,
-        nombre_clase: nombre_clase || 'Entrenamiento',
-        fecha_reserva: serverTimestamp(),
-        estado: 'confirmada',
-    });
+    // 2. Verificar Disponibilidad (Query normal fuera de transacción)
+    const start = new Date(fecha_sesion);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(fecha_sesion);
+    end.setHours(23, 59, 59, 999);
 
-    return reserva.id;
+    const q = query(
+        collection(db, 'reservas'),
+        where('fecha_sesion', '>=', Timestamp.fromDate(start)),
+        where('fecha_sesion', '<=', Timestamp.fromDate(end)),
+        where('hora', '==', hora),
+        where('estado', '==', 'confirmada')
+    );
+
+    const snap = await getDocs(q);
+    const reservas = snap.docs.map(d => d.data());
+
+    // Validar solapamiento personal
+    if (reservas.find(r => r.uid_usuario === user.uid)) {
+        throw new Error('YA_TIENES_CITA');
+    }
+
+    // Validar capacidad
+    const ocupadas = reservas.filter(r => r.entrenador_id === entrenador_id).length;
+    if (ocupadas >= 1) {
+        throw new Error('SESION_LLENA');
+    }
+
+    try {
+        await runTransaction(db, async (transaction) => {
+            const userRef = doc(db, 'usuarios', user.uid);
+            const userSnap = await transaction.get(userRef);
+            if (!userSnap.exists()) throw new Error('Usuario no encontrado');
+            const userData = userSnap.data();
+
+            if ((userData.sesiones_restantes || 0) <= 0) {
+                throw new Error('SIN_SESIONES');
+            }
+
+            // Operaciones de escritura atómicas
+            transaction.update(userRef, {
+                sesiones_restantes: userData.sesiones_restantes - 1
+            });
+
+            const newReservaRef = doc(collection(db, 'reservas'));
+            transaction.set(newReservaRef, {
+                uid_usuario: user.uid,
+                entrenador_id: entrenador_id || '',
+                entrenador_nombre: entrenador_nombre || '',
+                fecha_sesion: Timestamp.fromDate(fecha_sesion),
+                hora,
+                nombre_clase: nombre_clase || 'Entrenamiento',
+                fecha_reserva: serverTimestamp(),
+                estado: 'confirmada',
+            });
+        });
+
+        return true;
+    } catch (error) {
+        console.error('[Firebase] Error en transacción crearReserva:', error);
+        throw error;
+    }
 }
 
 /** Escucha cambios en reservas para actualizar disponibilidad en tiempo real */
@@ -316,14 +370,6 @@ export async function getReservasUsuario() {
         const snap = await getDocs(q);
         const reservas = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
-        // Filter confirmed only? User might want to see history.
-        // Let's filter confirmed if needed, but for "Mis Citas" we want history too? 
-        // Previously filter was 'confirmada'. Let's keep it consistent with previous logic if possible, 
-        // but maybe show all non-cancelled? Or show cancelled too?
-        // Ah, the previous code filtered by 'confirmada'. 
-        // Let's filter in JS to include confirming/cancelled for history if desired, 
-        // but for now let's reproduce the previous logic: 'confirmada' only.
-
         return reservas
             .filter(r => r.estado === 'confirmada')
             .sort((a, b) => b.fecha_sesion.seconds - a.fecha_sesion.seconds);
@@ -342,7 +388,6 @@ export async function getProximaReserva() {
     const now = Timestamp.now();
 
     // OPTIMIZACIÓN: Fetch all confirmed by user, filter future in memory
-    // This avoids complex composite index on (uid, estado, fecha) which might be building
     const q = query(
         collection(db, 'reservas'),
         where('uid_usuario', '==', user.uid),
@@ -363,20 +408,53 @@ export async function getProximaReserva() {
     }
 }
 
-/** Cancela una reserva y devuelve la sesión al usuario */
+/** Cancela una reserva y devuelve la sesión al usuario (con política de 2h) */
 export async function cancelarReserva(reservaId) {
     const user = auth.currentUser;
     if (!user) throw new Error('No autenticado');
 
-    const ref = doc(db, 'reservas', reservaId);
-    await updateDoc(ref, { estado: 'cancelada' });
+    try {
+        await runTransaction(db, async (transaction) => {
+            const reservaRef = doc(db, 'reservas', reservaId);
+            const reservaSnap = await transaction.get(reservaRef);
 
-    // Devolver sesión
-    const perfil = await getPerfilUsuario(user.uid);
-    if (perfil) {
-        await updateDoc(doc(db, 'usuarios', user.uid), {
-            sesiones_restantes: (perfil.sesiones_restantes || 0) + 1,
+            if (!reservaSnap.exists()) throw new Error('Reserva no encontrada');
+            const reservaData = reservaSnap.data();
+
+            if (reservaData.uid_usuario !== user.uid) throw new Error('No autorizado');
+            if (reservaData.estado === 'cancelada') throw new Error('Ya está cancelada');
+
+            // 2. Obtener Perfil del Usuario para devolución (LECTURA)
+            const userRef = doc(db, 'usuarios', user.uid);
+            const userSnap = await transaction.get(userRef);
+
+            // 3. Validar política de cancelación (mínimo 2 horas antes)
+            const now = new Date();
+            const sessionDate = reservaData.fecha_sesion.toDate();
+            const [h, m] = reservaData.hora.split(':');
+            sessionDate.setHours(parseInt(h), parseInt(m), 0, 0);
+
+            const diffMs = sessionDate - now;
+            const diffHours = diffMs / (1000 * 60 * 60);
+
+            if (diffHours < 2) {
+                throw new Error('LIMITE_CANCELACION_EXCEDIDO');
+            }
+
+            // 4. Operaciones de ESCRITURA (Al final)
+            transaction.update(reservaRef, { estado: 'cancelada' });
+
+            if (userSnap.exists()) {
+                const userData = userSnap.data();
+                transaction.update(userRef, {
+                    sesiones_restantes: (userData.sesiones_restantes || 0) + 1
+                });
+            }
         });
+        return true;
+    } catch (error) {
+        console.error('[Firebase] Error en transacción cancelarReserva:', error);
+        throw error;
     }
 }
 
@@ -438,7 +516,7 @@ export async function seedEntrenadores() {
                 rol: 'Functional Trainer',
                 especialidades: ['Fuerza', 'Funcional'],
                 bio: 'Construye un cuerpo fuerte y útil para el día a día. Enfoque en movimiento natural.',
-                foto_url: 'https://images.unsplash.com/photo-1620188467120-5042ed1eb5da?w=400&q=80', // Using similar placeholder, ideally distinct
+                foto_url: 'https://images.unsplash.com/photo-1620188467120-5042ed1eb5da?w=400&q=80',
                 activo: true,
             },
         ];
@@ -446,9 +524,8 @@ export async function seedEntrenadores() {
         for (const trainer of data) {
             await addDoc(collection(db, 'entrenadores'), trainer);
         }
-        console.log('[Seed] Entrenadores creados');
     } catch (e) {
-        console.warn('[Seed] Skipped trainers seeding (likely permissions):', e.message);
+        console.warn('[Seed] trainers error:', e.message);
     }
 }
 
@@ -482,8 +559,7 @@ export async function seedPlanes() {
         for (const plan of data) {
             await addDoc(collection(db, 'planes'), plan);
         }
-        console.log('[Seed] Planes creados');
     } catch (e) {
-        console.warn('[Seed] Skipped plans seeding (likely permissions):', e.message);
+        console.warn('[Seed] planes error:', e.message);
     }
 }

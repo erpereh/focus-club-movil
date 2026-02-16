@@ -661,10 +661,10 @@
                     await activarPlan(currentUserProfile.uid, planId);
 
                     // Refresh Profile
-                    const profile = await getPerfilUsuario(currentUserProfile.uid);
-                    updateProfileUI(getUsuarioActual(), profile);
+                    currentUserProfile = await getPerfilUsuario(currentUserProfile.uid);
+                    updateProfileUI(getUsuarioActual(), currentUserProfile);
 
-                    alert("✅ ¡Plan activado correctamente!");
+                    alert("¡Plan activado correctamente!");
                     window.switchTab('inicio');
                 } catch (err) {
                     console.error(err);
@@ -684,7 +684,7 @@
             if (!window.selectedDate || !window.selectedTime) { alert("Por favor selecciona día y hora."); return; }
 
             if (!currentUserProfile || currentUserProfile.sesiones_restantes <= 0) {
-                alert("❌ Sin sesiones disponibles. Por favor renueva tu bono.");
+                alert("Sin sesiones disponibles. Por favor renueva tu bono.");
                 window.switchTab('planes');
                 return;
             }
@@ -735,7 +735,7 @@
                 const allReservas = await getReservasUsuario();
                 renderMisCitas(allReservas);
 
-                window.showToast("✅ Reserva confirmada");
+                window.showToast("Reserva confirmada");
                 window.switchTab('inicio');
 
                 // Reset Selection
@@ -751,13 +751,20 @@
 
             } catch (err) {
                 console.error(err);
+                let message = "Error al reservar: " + err.message;
+
                 if (err.message === 'YA_TIENES_CITA') {
-                    alert('⚠️ Ya tienes una reserva confirmada a esta misma hora.\nPor favor, elige otro horario.');
+                    message = 'Ya tienes una reserva confirmada a esta misma hora.\nPor favor, elige otro horario.';
                 } else if (err.message === 'SESION_LLENA') {
-                    alert('❌ Lo sentimos, esta sesión acaba de completarse.\nPor favor, elige otro entrenador o un horario diferente.');
-                } else {
-                    alert("Error al reservar: " + err.message);
+                    message = 'Lo sentimos, esta sesión acaba de completarse.\nPor favor, elige otro entrenador o un horario diferente.';
+                } else if (err.message === 'FECHA_PASADA') {
+                    message = 'No puedes reservar una sesión en el pasado.';
+                } else if (err.message === 'SIN_SESIONES') {
+                    message = 'No tienes sesiones disponibles. Por favor renueva tu bono.';
                 }
+
+                alert(message);
+
                 document.getElementById('btn-confirm').innerText = "CONFIRMAR RESERVA";
                 document.getElementById('btn-confirm').disabled = false;
             }
@@ -833,8 +840,8 @@
                 await cancelarReserva(reservaId);
 
                 // Refresh data
-                const profile = await getPerfilUsuario(currentUserProfile.uid);
-                updateProfileUI(getUsuarioActual(), profile);
+                currentUserProfile = await getPerfilUsuario(currentUserProfile.uid);
+                updateProfileUI(getUsuarioActual(), currentUserProfile);
 
                 const nextReserva = await getProximaReserva();
                 updateNextSessionUI(nextReserva);
@@ -845,7 +852,11 @@
                 window.showToast("Cita cancelada. Sesión devuelta.");
             } catch (e) {
                 console.error(e);
-                alert("Error cancelando: " + e.message);
+                let message = "Error al cancelar: " + e.message;
+                if (e.message === 'LIMITE_CANCELACION_EXCEDIDO') {
+                    message = 'No se puede cancelar la cita con menos de 2 horas de antelación.';
+                }
+                alert(message);
             }
         }
 
