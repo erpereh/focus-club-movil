@@ -12,7 +12,7 @@ import { WebView } from 'react-native-webview';
 import * as Notifications from 'expo-notifications';
 
 // ─── CONFIG ────────────────────────────────────────────
-const WEB_APP_URL = 'https://focus-club-movil.expo.app/login.html';
+const WEB_APP_URL = 'https://focus-club-f11fd.web.app/login.html';
 // Dev local: 'http://TU_IP_LOCAL:5173/login.html'
 
 Notifications.setNotificationHandler({
@@ -53,15 +53,23 @@ export default function App() {
         } catch (e) { }
     }, []);
 
+    // Handler estable
+    const onNavigationStateChange = useCallback((nav) => {
+        setCanGoBack(nav.canGoBack);
+    }, []);
+
+    // Source estable
+    const source = { uri: WEB_APP_URL };
+
     return (
         <View style={styles.container}>
             <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
             <SafeAreaView style={styles.safeArea}>
                 <WebView
                     ref={webViewRef}
-                    source={{ uri: WEB_APP_URL }}
+                    source={source}
                     style={styles.webview}
-                    onNavigationStateChange={(nav) => setCanGoBack(nav.canGoBack)}
+                    onNavigationStateChange={onNavigationStateChange}
                     onMessage={handleMessage}
                     onLoadStart={() => setIsLoading(true)}
                     onLoadEnd={() => setIsLoading(false)}
@@ -71,6 +79,9 @@ export default function App() {
                     startInLoadingState={false}
                     scalesPageToFit={Platform.OS === 'android'}
                     applicationNameForUserAgent="FocusClubApp/1.0"
+                    sharedCookiesEnabled={true}
+                    thirdPartyCookiesEnabled={true}
+                    cacheEnabled={true}
                 />
             </SafeAreaView>
             {isLoading && (
