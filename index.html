@@ -1,13 +1,61 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/logo.jpg">
+    <link rel="icon" type="image/jpeg" href="/logo.jpg">
+
+    <!-- iOS PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Focus Club">
+
     <title>Focus Club</title>
     <script>
-        // Capacitor carga index.html por defecto — redirigimos al login
-        window.location.replace('./login.html');
+        // Clear potential stuck Service Workers
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+                for (let registration of registrations) { registration.unregister(); }
+            });
+        }
+
+        // Direct redirect to login
+        if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
+            window.location.assign('/login.html');
+        }
     </script>
 </head>
-<body></body>
+
+<body>
+    <!-- Landscape Blocker -->
+    <!-- Landscape Blocker -->
+    <div id="landscape-blocker">
+        <div class="content">
+            <img src="./img/logo.jpg" alt="Focus Club" class="blocker-logo">
+            <h2>Gira tu dispositivo</h2>
+            <p>Focus Club está diseñado para usarse en modo vertical.</p>
+        </div>
+    </div>
+    <script>
+        // Force orientation check (JS Fallback)
+        function checkOrientation() {
+            const blocker = document.getElementById('landscape-blocker');
+            // If height > width (Portrait), force hide
+            if (window.innerHeight > window.innerWidth) {
+                blocker.style.setProperty('display', 'none', 'important');
+            } else {
+                // Remove inline style to let CSS media query handle it (or force flex if needed)
+                blocker.style.removeProperty('display');
+            }
+        }
+        window.addEventListener('resize', checkOrientation);
+        window.addEventListener('orientationchange', checkOrientation);
+        document.addEventListener('DOMContentLoaded', checkOrientation);
+        checkOrientation();
+    </script>
+</body>
+
 </html>
